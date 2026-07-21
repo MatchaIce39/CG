@@ -111,7 +111,7 @@ void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
 
         spmv(A.sparse_handle, A.d_off_proc.descr, alpha, vec_recv,
                 1.0, vec_b, A.d_off_proc.buf_size, A.d_off_proc.buffer);
-        HIP_CHECK(hipStreamSynchronize(0));
+        CUDA_CHECK(cudaStreamSynchronize(0));
     }
     else
     {
@@ -120,12 +120,12 @@ void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
     }
 }
 
-double inner_product(rocblas_handle handle, int n, double* a_d, double* b_d,
+double inner_product(cublas_handle handle, int n, double* a_d, double* b_d,
             double* local_sum_ptr, double* global_sum_ptr,
             MPIL_Comm* mpil_comm, MPIL_Request* mpil_req)
 {
-    rocblas_ddot(handle, n, a_d, 1, b_d, 1, local_sum_ptr);
-    HIP_CHECK(hipStreamSynchronize(0));
+    cublasDdot(handle, n, a_d, 1, b_d, 1, local_sum_ptr);
+    CUDA_CHECK(cudaStreamSynchronize(0));
 
     if (mpil_req == NULL)
     {
@@ -140,9 +140,9 @@ double inner_product(rocblas_handle handle, int n, double* a_d, double* b_d,
     return *global_sum_ptr;
 }
 
-int CG(ParMat& A, double* x, rocsparse_dnvec_descr vec_x,
-        double* b, rocsparse_dnvec_descr vec_b,
-        double* sendbuf, double* recvbuf, rocsparse_dnvec_descr vec_recv,
+int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
+        double* b, cusparseDnVecDescr_t vec_b,
+        double* sendbuf, double* recvbuf, cusparseDnVecDescr_t vec_recv,
         bool spmv_init, bool allreduce_init)
 {
     int rank, num_procs;
@@ -154,17 +154,17 @@ int CG(ParMat& A, double* x, rocsparse_dnvec_descr vec_x,
 
     // CG Variables
     double *r, *p, *Ap;
-    HIP_CHECK(hipMalloc((void**)&r, A.local_rows*sizeof(double)));
-    HIP_CHECK(hipMalloc((void**)&p, A.local_rows*sizeof(double)));
-    HIP_CHECK(hipMalloc((void**)&Ap, A.local_rows*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&r, A.local_rows*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&p, A.local_rows*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&Ap, A.local_rows*sizeof(double)));
 
-    rocsparse_dnvec_descr vec_r, vec_p, vec_Ap;
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_r, A.local_rows,
-            r, rocsparse_datatype_f64_r));
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_p, A.local_rows,
-            p, rocsparse_datatype_f64_r));
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_Ap, A.local_rows,
-            Ap, rocsparse_datatype_f64_r));
+    cusparseDnVecDescr_t vec_r, vec_p, vec_Ap;
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_r, A.local_rows,
+            r, CUDA_R_64F));
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_p, A.local_rows,
+            p, CUDA_R_64F));
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_Ap, A.local_rows,
+            Ap, CUDA_R_64F));
     std::vector<double> res;
 
     // Setup persistent allreduces
@@ -220,16 +220,16 @@ int CG(ParMat& A, double* x, rocsparse_dnvec_descr vec_x,
     int max_iter = 500;
 
     // r0 = b - A * x0
-    HIP_CHECK(hipMemcpyAsync(r, b, A.local_rows*sizeof(double),
-            hipMemcpyDeviceToDevice, 0));
-    HIP_CHECK(hipStreamSynchronize(0));
+    CUDA_CHECK(cudaMemcpyAsync(r, b, A.local_rows*sizeof(double),
+            cudaMemcpyDeviceToDevice, 0));
+    CUDA_CHECK(cudaStreamSynchronize(0));
     spmv(-1.0, A, x, vec_x, 1.0, r, vec_r, mpil_comm,
             sendbuf, recvbuf, vec_recv, mpil_spmv_req);
 
     // p0 = r0
-    HIP_CHECK(hipMemcpyAsync(p, r, A.local_rows*sizeof(double),
-            hipMemcpyDeviceToDevice, 0));
-    HIP_CHECK(hipStreamSynchronize(0));
+    HIP_CUDA(cudaMemcpyAsync(p, r, A.local_rows*sizeof(double),
+            cudaMemcpyDeviceToDevice, 0));
+    HIP_CUDA(cudaStreamSynchronize(0));
 
     // Find initial (r, r) and residual
     rr_inner = inner_product(A.blas_handle, A.local_rows, r, 
@@ -262,22 +262,22 @@ int CG(ParMat& A, double* x, rocsparse_dnvec_descr vec_x,
         }
         alpha = rr_inner / App_inner;
 
-        rocblas_daxpy(A.blas_handle, A.local_rows, &alpha, p, 1, x, 1);
-        HIP_CHECK(hipStreamSynchronize(0));
+        rocblas_cublasDaxpy(A.blas_handle, A.local_rows, &alpha, p, 1, x, 1);
+        CUDA_CHECK(cudaStreamSynchronize(0));
 
         // x_{i+1} = x_i + alpha_i * p_i
         if ((iter % recompute_r) && iter > 0)
         {
             alpha *= -1.0;
-            rocblas_daxpy(A.blas_handle, A.local_rows, &alpha,
+            cublasDaxpy(A.blas_handle, A.local_rows, &alpha,
                     Ap, 1, r, 1);
-            HIP_CHECK(hipStreamSynchronize(0));
+            CUDA_CHECK(cudaStreamSynchronize(0));
         }
         else
         {
-            HIP_CHECK(hipMemcpyAsync(r, b, A.local_rows*sizeof(double),
-                    hipMemcpyDeviceToDevice, 0));
-            HIP_CHECK(hipStreamSynchronize(0));
+            CUDA_CHECK(cudaMemcpyAsync(r, b, A.local_rows*sizeof(double),
+                    cudaMemcpyDeviceToDevice, 0));
+            CUDA_CHECK(cudaStreamSynchronize(0));
             spmv(-1.0, A, x, vec_x, 1.0, r, vec_r, mpil_comm,
                     sendbuf, recvbuf, vec_recv, mpil_spmv_req);
         }
@@ -286,10 +286,10 @@ int CG(ParMat& A, double* x, rocsparse_dnvec_descr vec_x,
                 r, &local_sum, &global_sum, mpil_comm, mpil_req);
         beta = next_inner / rr_inner;
 
-        rocblas_dscal(A.blas_handle, A.local_rows, &beta, p, 1);
-        rocblas_daxpy(A.blas_handle, A.local_rows, &one, r,
+        cublasDscal(A.blas_handle, A.local_rows, &beta, p, 1);
+        cublasDaxpy(A.blas_handle, A.local_rows, &one, r,
                 1, p, 1);
-        HIP_CHECK(hipStreamSynchronize(0));
+        CUDA_CHECK(cudaStreamSynchronize(0));
 
         // Update next inner product
         rr_inner = next_inner;
