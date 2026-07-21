@@ -17,12 +17,12 @@ __global__ void pack(const double* __restrict__ x,
 
 
 // Parallel SpMV b = alpha*A*x + beta*b 
-void spmv(rocsparse_handle handle, rocsparse_spmat_descr A,
-            double alpha, rocsparse_dnvec_descr x, 
-            double beta, rocsparse_dnvec_descr y,
+void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
+            double alpha, cusparseDnVecDescr_t x, 
+            double beta, cusparseDnVecDescr_t y,
             size_t tmp_buffer_size, void* tmp_buffer)
 {
-    ROCSPARSE_CHECK(rocsparse_spmv(handle, rocsparse_operation_none,
+    ROCSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
             &alpha, A, x, &beta, y, 
             rocsparse_datatype_f64_r,
             rocsparse_spmv_alg_default,
@@ -30,9 +30,9 @@ void spmv(rocsparse_handle handle, rocsparse_spmat_descr A,
             &tmp_buffer_size, tmp_buffer));
 }
 
-void spmv(double alpha, ParMat& A, double* x_d, rocsparse_dnvec_descr vec_x, 
-        double beta, double* b_d, rocsparse_dnvec_descr vec_b, MPIL_Comm* mpil_comm,
-        double* sendbuf, double* recvbuf, rocsparse_dnvec_descr vec_recv)
+void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x, 
+        double beta, double* b_d, cusparseDnVecDescr_t vec_b, MPIL_Comm* mpil_comm,
+        double* sendbuf, double* recvbuf, cusparseDnVecDescr_t vec_recv)
 {
     int proc, start, end;
     int tag = 0;
@@ -57,7 +57,7 @@ void spmv(double alpha, ParMat& A, double* x_d, rocsparse_dnvec_descr vec_x,
         dim3 blocks((A.send_comm.size_msgs + threads.x - 1) / threads.x);
         pack<<<blocks, threads, 0, 0>>>(x_d, (const int*)A.send_comm.d_idx,
                 sendbuf, A.send_comm.size_msgs);
-        HIP_CHECK(hipStreamSynchronize(0));
+        CUDA_CHECK(cudaStreamSynchronize(0));
     }
 
     MPIL_Neighbor_alltoallv_topo(sendbuf,
@@ -76,15 +76,15 @@ void spmv(double alpha, ParMat& A, double* x_d, rocsparse_dnvec_descr vec_x,
 
     spmv(A.sparse_handle, A.d_off_proc.descr, alpha, vec_recv,
             1.0, vec_b, A.d_off_proc.buf_size, A.d_off_proc.buffer);
-    HIP_CHECK(hipStreamSynchronize(0));
+    CUDA_CHECK(cudaStreamSynchronize(0));
 
     MPIL_Info_free(&mpil_info);
     MPIL_Topo_free(&mpil_topo);
 }
 
-void spmv(double alpha, ParMat& A, double* x_d, rocsparse_dnvec_descr vec_x,
-        double beta, double* b_d, rocsparse_dnvec_descr vec_b, MPIL_Comm* mpil_comm,
-        double* sendbuf, double* recvbuf, rocsparse_dnvec_descr vec_recv,
+void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
+        double beta, double* b_d, cusparseDnVecDescr_t vec_b, MPIL_Comm* mpil_comm,
+        double* sendbuf, double* recvbuf, cusparseDnVecDescr_t vec_recv,
         MPIL_Request* req)
 {
     if (req != NULL)
@@ -99,7 +99,7 @@ void spmv(double alpha, ParMat& A, double* x_d, rocsparse_dnvec_descr vec_x,
             dim3 blocks((A.send_comm.size_msgs + threads.x - 1) / threads.x);
             pack<<<blocks, threads, 0, 0>>>(x_d, (const int*)A.send_comm.d_idx, 
                     sendbuf, A.send_comm.size_msgs);
-            HIP_CHECK(hipStreamSynchronize(0));
+            CUDA_CHECK(cudaStreamSynchronize(0));
         }
 
         MPIL_Start(req);
