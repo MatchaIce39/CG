@@ -310,13 +310,13 @@ int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
     MPIL_Info_free(&mpil_info);
     MPIL_Comm_free(&mpil_comm);
 
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_r));
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_p));
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_Ap));
+    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_r));
+    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_p));
+    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_Ap));
 
-    HIP_CHECK(hipFree(r));
-    HIP_CHECK(hipFree(p));
-    HIP_CHECK(hipFree(Ap));
+    CUDA_CHECK(cudaFree(r));
+    CUDA_CHECK(cudaFree(p));
+    CUDA_CHECK(cudaFree(Ap));
 
     return iter;
 }
@@ -364,39 +364,39 @@ int main(int argc, char* argv[])
     std::vector<double> x(A.local_cols);
     std::vector<double> b(A.local_rows);
     double *x_d, *b_d, *r_d;
-    HIP_CHECK(hipMalloc((void**)&x_d, A.local_cols*sizeof(double)));
-    HIP_CHECK(hipMalloc((void**)&b_d, A.local_rows*sizeof(double)));
-    HIP_CHECK(hipMalloc((void**)&r_d, A.local_rows*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&x_d, A.local_cols*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&b_d, A.local_rows*sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&r_d, A.local_rows*sizeof(double)));
 
     double* sendbuf = NULL;
     if (A.send_comm.size_msgs)
     {
-        HIP_CHECK(hipMalloc((void**)&sendbuf, 
+        CUDA_CHECK(cudaMalloc((void**)&sendbuf, 
                 A.send_comm.size_msgs*sizeof(double)));
     }
 
     double* recvbuf = NULL;
     if (A.recv_comm.size_msgs)
     {
-        HIP_CHECK(hipMalloc((void**)&recvbuf,
+        CUDA_CHECK(cudaMalloc((void**)&recvbuf,
                 A.recv_comm.size_msgs*sizeof(double)));
     }
 
     rocsparse_dnvec_descr vec_x, vec_b, vec_r, vec_recv;
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_x, A.local_cols, x_d, 
-            rocsparse_datatype_f64_r));
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_b, A.local_rows, b_d,
-            rocsparse_datatype_f64_r));
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_r, A.local_rows, r_d,
-            rocsparse_datatype_f64_r));
-    ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_recv, A.recv_comm.size_msgs, 
-                recvbuf, rocsparse_datatype_f64_r));
+    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_x, A.local_cols, x_d, 
+            CUDA_R_64F));
+    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_b, A.local_rows, b_d,
+            CUDA_R_64F));
+    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_r, A.local_rows, r_d,
+            CUDA_R_64F));
+    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_recv, A.recv_comm.size_msgs, 
+                recvbuf, CUDA_R_64F));
 
 
     // Initialize SpMV Buffers
     double one = 1.0;
     double zero = 0.0;
-    ROCSPARSE_CHECK(rocsparse_spmv(A.sparse_handle, 
+    CUDASPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
             rocsparse_operation_none,
             &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
             rocsparse_datatype_f64_r,
