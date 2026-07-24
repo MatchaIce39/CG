@@ -22,10 +22,10 @@ void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
             double beta, cusparseDnVecDescr_t y,
             size_t tmp_buffer_size, void* tmp_buffer)
 {
-    ROCSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+    CUSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
             &alpha, A, x, &beta, y, 
-            rocsparse_datatype_f64_r,
-            rocsparse_spmv_alg_default,
+            CUDA_R_64F,
+            cusparsespmv_default,
             rocsparse_spmv_stage_compute,
             &tmp_buffer_size, tmp_buffer));
 }
@@ -310,9 +310,9 @@ int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
     MPIL_Info_free(&mpil_info);
     MPIL_Comm_free(&mpil_comm);
 
-    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_r));
-    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_p));
-    CUDASPARSE_CHECK(cusparseDestoryDnVec(vec_Ap));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_r));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_p));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_Ap));
 
     CUDA_CHECK(cudaFree(r));
     CUDA_CHECK(cudaFree(p));
@@ -383,41 +383,41 @@ int main(int argc, char* argv[])
     }
 
     rocsparse_dnvec_descr vec_x, vec_b, vec_r, vec_recv;
-    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_x, A.local_cols, x_d, 
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_x, A.local_cols, x_d, 
             CUDA_R_64F));
-    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_b, A.local_rows, b_d,
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_b, A.local_rows, b_d,
             CUDA_R_64F));
-    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_r, A.local_rows, r_d,
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_r, A.local_rows, r_d,
             CUDA_R_64F));
-    CUDASPARSE_CHECK(cusparseCreateDnVec(&vec_recv, A.recv_comm.size_msgs, 
+    CUSPARSE_CHECK(cusparseCreateDnVec(&vec_recv, A.recv_comm.size_msgs, 
                 recvbuf, CUDA_R_64F));
 
 
     // Initialize SpMV Buffers
     double one = 1.0;
     double zero = 0.0;
-    CUDASPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
-            rocsparse_operation_none,
+    CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
+            cusparse_operation_non_transpose,
             &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
-            rocsparse_datatype_f64_r,
-            rocsparse_spmv_alg_default,
-            rocsparse_spmv_stage_buffer_size,
+            CUDA_R_64F,
+            cusparse_spmv_alg_default,
+            cusparseSpMV_bufferSize,
             &A.d_on_proc.buf_size, NULL));
     if (A.d_on_proc.buf_size)
     {
-        HIP_CHECK(hipMalloc(&A.d_on_proc.buffer,
+        CUDA_CHECK(cudaMalloc(&A.d_on_proc.buffer,
             A.d_on_proc.buf_size));
     }
-    ROCSPARSE_CHECK(rocsparse_spmv(A.sparse_handle, 
-            rocsparse_operation_none,
+    CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
+            cusparse_operation_non_transpose,
             &one, A.d_off_proc.descr, vec_recv, &zero, vec_b,
-            rocsparse_datatype_f64_r,
-            rocsparse_spmv_alg_default,
-            rocsparse_spmv_stage_buffer_size,
+            CUDA_R_64F,
+            cusparse_spmv_alg_default,
+            cusparse_spmv_stage_buffer_size,
             &A.d_off_proc.buf_size, NULL)); 
     if (A.d_off_proc.buf_size)
     {
-        HIP_CHECK(hipMalloc(&A.d_off_proc.buffer,
+        CUDA_CHECK(cudaMalloc(&A.d_off_proc.buffer,
                 A.d_off_proc.buf_size));
     }
 
@@ -428,8 +428,8 @@ int main(int argc, char* argv[])
     std::uniform_real_distribution<double> dist(0.0, 1.0);
     std::generate(x.begin(), x.end(),
               [&]() { return dist(rng); });
-    HIP_CHECK(hipMemcpy(x_d, x.data(), x.size() * sizeof(double),
-            hipMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(x_d, x.data(), x.size() * sizeof(double),
+            cudaMemcpyHostToDevice));
     spmv(1.0, A, x_d, vec_x, 0.0, b_d, vec_b, mpil_comm,
             sendbuf, recvbuf, vec_recv);
 
@@ -541,14 +541,14 @@ if (rank == 0) printf("norm b %e\n", norm_b);
             MPIL_Set_allreduce_algorithm(methods[idx]);
             MPI_Barrier(MPI_COMM_WORLD);
             t0 = MPI_Wtime();
-            HIP_CHECK(hipMemsetAsync(x_d, 0, A.local_cols*sizeof(double), 0));
-            HIP_CHECK(hipStreamSynchronize(0));
+            CUDA_CHECK(cudaMemsetAsync(x_d, 0, A.local_cols*sizeof(double), 0));
+            CUDA_CHECK(cudaStreamSynchronize(0));
             conv_iter = CG(A, x_d, vec_x, b_d, vec_b, sendbuf,
                     recvbuf, vec_recv, persistent_spmv, persistent[idx]);
             tfinal = (MPI_Wtime() - t0);
-            HIP_CHECK(hipMemcpyAsync(r_d, b_d, A.local_rows*sizeof(double),
-                    hipMemcpyDeviceToDevice, 0));
-            HIP_CHECK(hipStreamSynchronize(0));
+            CUDA_CHECK(cudaMemcpyAsync(r_d, b_d, A.local_rows*sizeof(double),
+                    cudaMemcpyDeviceToDevice, 0));
+            CUDA_CHECK(cudaStreamSynchronize(0));
             spmv(-1.0, A, x_d, vec_x, 1.0, r_d, vec_r, mpil_comm,
                     sendbuf, recvbuf, vec_recv);
             sum = inner_product(A.blas_handle, A.local_rows, r_d,
@@ -568,8 +568,8 @@ if (rank == 0) printf("norm b %e\n", norm_b);
                 t0 = MPI_Wtime();
                 for (int i = 0; i < n_iters; i++)
                 {
-                    HIP_CHECK(hipMemsetAsync(x_d, 0, A.local_rows*sizeof(double), 0));
-                    HIP_CHECK(hipStreamSynchronize(0));
+                    CUDA_CHECK(cudaMemsetAsync(x_d, 0, A.local_rows*sizeof(double), 0));
+                    CUDA_CHECK(cudaStreamSynchronize(0));
                     CG(A, x_d, vec_x, b_d, vec_b, sendbuf, recvbuf,
                             vec_recv, persistent_spmv, persistent[idx]);
                 }
@@ -582,16 +582,16 @@ if (rank == 0) printf("norm b %e\n", norm_b);
         }
     }
 
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_x));
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_b));
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_r));
-    ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_recv));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_x));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_b));
+    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_r));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_recv));
 
-    HIP_CHECK(hipFree(x_d));
-    HIP_CHECK(hipFree(b_d));
-    HIP_CHECK(hipFree(r_d));
-    HIP_CHECK(hipFree(sendbuf));
-    HIP_CHECK(hipFree(recvbuf));
+    CUDA_CHECK(cudaFree(x_d));
+    CUDA_CHECK(cudaFree(b_d));
+    CUDA_CHECK(cudaFree(r_d));
+    CUDA_CHECK(cudaFree(sendbuf));
+    CUDA_CHECK(cudaFree(recvbuf));
 
     MPIL_Comm_free(&mpil_comm);
 
