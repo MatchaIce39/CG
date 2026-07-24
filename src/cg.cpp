@@ -16,7 +16,7 @@ __global__ void pack(const double* __restrict__ x,
 }
 
 
-// Parallel SpMV b = alpha*A*x + beta*b 
+// Parallel SpMV b = alpha*A*x + beta*b
 void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
             double alpha, cusparseDnVecDescr_t x, 
             double beta, cusparseDnVecDescr_t y,
@@ -25,7 +25,7 @@ void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
     CUSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
             &alpha, A, x, &beta, y, 
             CUDA_R_64F,
-            cusparsespmv_default,
+            cusparseSpMVAlg_t,
             &tmp_buffer_size, tmp_buffer));
 }
 
@@ -119,7 +119,7 @@ void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
     }
 }
 
-double inner_product(cublas_handle handle, int n, double* a_d, double* b_d,
+double inner_product(cublasHandle_t handle, int n, double* a_d, double* b_d,
             double* local_sum_ptr, double* global_sum_ptr,
             MPIL_Comm* mpil_comm, MPIL_Request* mpil_req)
 {
@@ -226,9 +226,9 @@ int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
             sendbuf, recvbuf, vec_recv, mpil_spmv_req);
 
     // p0 = r0
-    HIP_CUDA(cudaMemcpyAsync(p, r, A.local_rows*sizeof(double),
+    CUDA_CHECK(cudaMemcpyAsync(p, r, A.local_rows*sizeof(double),
             cudaMemcpyDeviceToDevice, 0));
-    HIP_CUDA(cudaStreamSynchronize(0));
+    CUDA_CHECK(cudaStreamSynchronize(0));
 
     // Find initial (r, r) and residual
     rr_inner = inner_product(A.blas_handle, A.local_rows, r, 
@@ -399,8 +399,8 @@ int main(int argc, char* argv[])
             cusparse_operation_non_transpose,
             &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
             CUDA_R_64F,
-            cusparse_spmv_alg_default,
-            cusparseSpMV_bufferSize,
+            cusparseSpMVAlg_t,
+            //cusparseSpMV_bufferSize,
             &A.d_on_proc.buf_size, NULL));
     if (A.d_on_proc.buf_size)
     {
@@ -411,8 +411,8 @@ int main(int argc, char* argv[])
             cusparse_operation_non_transpose,
             &one, A.d_off_proc.descr, vec_recv, &zero, vec_b,
             CUDA_R_64F,
-            cusparse_spmv_alg_default,
-            cusparse_spmv_stage_buffer_size,
+            cusparseSpMVAlg_t,
+            //cusparsespmv_bufferSize,
             &A.d_off_proc.buf_size, NULL)); 
     if (A.d_off_proc.buf_size)
     {
