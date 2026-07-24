@@ -26,7 +26,6 @@ void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
             &alpha, A, x, &beta, y, 
             CUDA_R_64F,
             cusparsespmv_default,
-            rocsparse_spmv_stage_compute,
             &tmp_buffer_size, tmp_buffer));
 }
 
@@ -262,7 +261,7 @@ int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
         }
         alpha = rr_inner / App_inner;
 
-        rocblas_cublasDaxpy(A.blas_handle, A.local_rows, &alpha, p, 1, x, 1);
+        cublasDaxpy(A.blas_handle, A.local_rows, &alpha, p, 1, x, 1);
         CUDA_CHECK(cudaStreamSynchronize(0));
 
         // x_{i+1} = x_i + alpha_i * p_i

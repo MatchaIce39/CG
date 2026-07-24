@@ -16,7 +16,7 @@ struct GPUMat
     int n_rows;
     int n_cols;
     int nnz;
-    rocsparse_spmat_descr descr;
+    cusparseSpMatDescr_t* descr;
     size_t buf_size;
     void* buffer;
 };
@@ -62,8 +62,8 @@ struct ParMat
     Comm recv_comm;
     MPI_Comm dist_graph_comm;
 
-    rocsparse_handle sparse_handle;
-    rocblas_handle blas_handle;
+    cusparseHandle_t sparse_handle;
+    cublasHandle_t blas_handle;
 };
 
 void form_recv_comm(ParMat& A)
@@ -214,43 +214,43 @@ void copy_to_device(const Mat& h, GPUMat& d)
     d.n_rows = h.n_rows;
     d.n_cols = h.n_cols;
     d.nnz = h.nnz;
-    HIP_CHECK(hipMalloc(&d.rowptr, (d.n_rows+1) * sizeof(int)));
-    HIP_CHECK(hipMalloc(&d.col_idx, d.nnz * sizeof(int)));
-    HIP_CHECK(hipMalloc(&d.data, d.nnz*sizeof(double)));
-    HIP_CHECK(hipMemcpy(d.rowptr, h.rowptr.data(), (d.n_rows+1)*sizeof(int),
-            hipMemcpyHostToDevice));
-    HIP_CHECK(hipMemcpy(d.col_idx, h.col_idx.data(), d.nnz*sizeof(int),
-            hipMemcpyHostToDevice));
-    HIP_CHECK(hipMemcpy(d.data, h.data.data(), d.nnz*sizeof(double),
-            hipMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc(&d.rowptr, (d.n_rows+1) * sizeof(int)));
+    CUDA_CHECK(cudaMalloc(&d.col_idx, d.nnz * sizeof(int)));
+    CUDA_CHECK(cudaMalloc(&d.data, d.nnz*sizeof(double)));
+    CUDA_CHECK(cudaMemcpy(d.rowptr, h.rowptr.data(), (d.n_rows+1)*sizeof(int),
+            cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d.col_idx, h.col_idx.data(), d.nnz*sizeof(int),
+            cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d.data, h.data.data(), d.nnz*sizeof(double),
+            cudaMemcpyHostToDevice));
 
-    ROCSPARSE_CHECK(rocsparse_create_csr_descr(&d.descr,
+    cusparseCreateCsr(&d.descr,
             d.n_rows, d.n_cols, d.nnz,
             d.rowptr, d.col_idx, d.data,
-            rocsparse_indextype_i32, rocsparse_indextype_i32,
-            rocsparse_index_base_zero, rocsparse_datatype_f64_r));
+            CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
+            CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F);
 }
 
 void copy_to_device(ParMat& A)
 {
-    ROCSPARSE_CHECK(rocsparse_create_handle(&A.sparse_handle));
-    ROCBLAS_CHECK(rocblas_create_handle(&A.blas_handle));
+    cusparseCreate(&A.sparse_handle);
+    cublasCreate(&A.blas_handle);
 
     copy_to_device(A.on_proc, A.d_on_proc);
     copy_to_device(A.off_proc, A.d_off_proc);
 
     if (A.send_comm.size_msgs)
     {
-        HIP_CHECK(hipMalloc(&A.send_comm.d_idx, A.send_comm.size_msgs * sizeof(int)));
-        HIP_CHECK(hipMemcpy(A.send_comm.d_idx, A.send_comm.idx.data(),
-                A.send_comm.size_msgs*sizeof(int), hipMemcpyHostToDevice));
+        CUDA_CHECK(cudaMalloc(&A.send_comm.d_idx, A.send_comm.size_msgs * sizeof(int)));
+        CUDA_CHECK(cudaMemcpy(A.send_comm.d_idx, A.send_comm.idx.data(),
+                A.send_comm.size_msgs*sizeof(int), cudaMemcpyHostToDevice));
     }
 
 }
 
 void free_gpu_mat(GPUMat& d)
 {
-    ROCSPARSE_CHECK(rocsparse_destroy_spmat_descr(d.descr));
+    rocsparse_destroy_spmat_descr(d.descr);
     HIP_CHECK(hipFree(d.rowptr));
     HIP_CHECK(hipFree(d.col_idx));
     HIP_CHECK(hipFree(d.data));
@@ -266,8 +266,8 @@ void free_mat(ParMat& A)
         HIP_CHECK(hipFree(A.send_comm.d_idx));
     }
 
-    ROCSPARSE_CHECK(rocsparse_destroy_handle(A.sparse_handle));
-    ROCBLAS_CHECK(rocblas_destroy_handle(A.blas_handle));
+    rocsparse_destroy_handle(A.sparse_handle);
+    rocblas_destroy_handle(A.blas_handle);
 }
 
 #endif

@@ -1,4 +1,4 @@
-module load rocmcc/6.4.0-magic
+module load cuda/12.4
 export ROCM_PATH=/usr/tce/packages/rocmcc/rocmcc-6.4.0-magic/
 export CC=mpicc
 export CXX=mpicxx
