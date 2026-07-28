@@ -1,5 +1,5 @@
-module load cuda/12.4
-export ROCM_PATH=/usr/tce/packages/rocmcc/rocmcc-6.4.0-magic/
+module load cuda/12.9.0-rir3
+export ROCM_PATH=/opt/spack/share/spack/lmod/linux-rocky9-x86_64/Core/cuda
 export CC=mpicc
 export CXX=mpicxx
 
@@ -12,6 +12,6 @@ hipcc -o cg cg.cpp \
   -lnuma \
   -lmpi_gtl_hsa \
   -DGPU -DGPU_AWARE \
-  -lrocsparse \
-  -lrocblas \
+  -lcusparse \
+  -lcublas \
   -x none ../../locality_fork/build_gpu/liblocality_aware.a

@@ -1,6 +1,6 @@
-//#include <rocsparse/rocsparse.h>
-//#include <rocblas/rocblas.h>
-//#include "hip/hip_runtime.h"
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+#include <cusparse.h>
 
 // From ROCm HIP-Tests
 #define CUDA_CHECK(cmd)                                               \
