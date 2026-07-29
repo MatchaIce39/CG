@@ -5,17 +5,16 @@
 
 // Serial SpMV b = alpha*A*x + beta*b
 void spmv(double alpha, Mat& A, std::vector<double>& x,
-        double beta, std::vector<double>& b, MPI_Request request)
+        double beta, std::vector<double>& b, MPI_Request *localRequest)
 {
     double sum;
-    MPI_status status;
     int flag = 0;
     int start, end;
 
     for (int i = 0; i < A.n_rows; i++)
     {
         start = A.rowptr[i];
-	MPI_Test(&request, &flag, &status)
+	MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
         end = A.rowptr[i+1];
         sum = 0;
         for (int j = start; j < end; j++)
@@ -24,11 +23,13 @@ void spmv(double alpha, Mat& A, std::vector<double>& x,
         }
         b[i] = alpha * sum + beta * b[i];
     }
+
+    MPI_Wait(&requset, MPI_STATUS_IGNORE);
 }
 
-// Parallel SpMV b = alpha*A*x + beta*b 
+// Parallel SpMV b = alpha*A*x + beta*b
 void spmv(double alpha, ParMat& A, std::vector<double>& x, 
-        double beta, std::vector<double>& b)
+        double beta, std::vector<double>& b, MPI_Request *localRequest)
 {
     int proc, start, end;
     int tag = 0;
@@ -65,7 +66,7 @@ void spmv(double alpha, ParMat& A, std::vector<double>& x,
                   &(A.send_comm.req[i]));
     }
 
-    spmv(alpha, A.on_proc, x, beta, b);
+    spmv(alpha, A.on_proc, x, beta, b, localRequest);
 
     if (A.recv_comm.n_msgs)
     {
@@ -77,14 +78,14 @@ void spmv(double alpha, ParMat& A, std::vector<double>& x,
         MPI_Waitall(A.send_comm.n_msgs, A.send_comm.req.data(), MPI_STATUSES_IGNORE);
     }
 
-    spmv(alpha, A.off_proc, recvbuf, 1.0, b);
+    spmv(alpha, A.off_proc, recvbuf, 1.0, b, localRequest);
 
 }
 
-double inner_product(std::vector<double> a, std::vector<double> b, MPI_request *request)
+double inner_product(std::vector<double> a, std::vector<double> b, MPI_Request *request)
 {
     double sum, sum_local;
-    MPI_request = localRequest;
+    MPI_Request localRequest;
 
     sum_local = 0;
     for (int i = 0; i < a.size(); i++)
@@ -158,7 +159,7 @@ int main(int argc, char* argv[])
     p = r;
 
     // Find initial (r, r) and residual
-    rr_inner = inner_product(r, r, request);
+    rr_inner = inner_product(r, r, &request);
     norm_r = sqrt(rr_inner);
     res.push_back(norm_r);
 
@@ -176,7 +177,7 @@ int main(int argc, char* argv[])
     while (norm_r > tol && iter < max_iter)
     {
         // alpha_i = (r_i, r_i) / (A*p_i, p_i)
-	App_inner = inner_product(Ap, p, request);
+	App_inner = inner_product(Ap, p, &request);
 
         spmv(1.0, A, p, 0.0, Ap, &request);
         //App_inner = inner_product(Ap, p);
@@ -200,7 +201,7 @@ int main(int argc, char* argv[])
             spmv(-1.0, A, x, 1.0, r, &request);
         }
 
-        next_inner = inner_product(r, r, request);
+        next_inner = inner_product(r, r, &request);
         beta = next_inner / rr_inner;
 
         scale(beta, p);
