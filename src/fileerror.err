@@ -1,0 +1,116 @@
+[easley051:2235447:0:2235447] Caught signal 11 (Segmentation fault: address not mapped to object at address 0x60)
+[easley051:2235449:0:2235449] Caught signal 11 (Segmentation fault: address not mapped to object at address 0x60)
+[easley051:2235448:0:2235448] Caught signal 11 (Segmentation fault: address not mapped to object at address 0x60)
+[easley051:2235450:0:2235450] Caught signal 11 (Segmentation fault: address not mapped to object at address 0x60)
+==== backtrace (tid:2235449) ====
+ 0  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(ucs_handle_error+0x2d4) [0x15488227ddc4]
+ 1  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x33f87) [0x15488227df87]
+ 2  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x34256) [0x15488227e256]
+ 3  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19) [0x1548831ffdc9]
+ 4  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e) [0x15488323dcbe]
+ 5  /users/njohnson77/CG/src/./cg() [0x40b8f6]
+ 6  /users/njohnson77/CG/src/./cg() [0x40bcae]
+ 7  /users/njohnson77/CG/src/./cg() [0x40c1be]
+ 8  /lib64/libc.so.6(+0x2a610) [0x154882c9f610]
+ 9  /lib64/libc.so.6(__libc_start_main+0x80) [0x154882c9f6c0]
+10  /users/njohnson77/CG/src/./cg() [0x409c85]
+=================================
+[easley051:2235449] *** Process received signal ***
+[easley051:2235449] Signal: Segmentation fault (11)
+[easley051:2235449] Signal code:  (-6)
+[easley051:2235449] Failing at address: 0x20bc231100221c39
+==== backtrace (tid:2235447) ====
+ 0  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(ucs_handle_error+0x2d4) [0x14b9e8c59dc4]
+ 1  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x33f87) [0x14b9e8c59f87]
+ 2  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x34256) [0x14b9e8c5a256]
+ 3  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19) [0x14b9e9bdbdc9]
+ 4  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e) [0x14b9e9c19cbe]
+ 5  /users/njohnson77/CG/src/./cg() [0x40b8f6]
+ 6  /users/njohnson77/CG/src/./cg() [0x40bcae]
+ 7  /users/njohnson77/CG/src/./cg() [0x40c1be]
+ 8  /lib64/libc.so.6(+0x2a610) [0x14b9e967b610]
+ 9  /lib64/libc.so.6(__libc_start_main+0x80) [0x14b9e967b6c0]
+10  /users/njohnson77/CG/src/./cg() [0x409c85]
+=================================
+[easley051:2235449] [ 0] /lib64/libc.so.6(+0x3fc60)[0x154882cb4c60]
+[easley051:2235447] *** Process received signal ***
+[easley051:2235447] Signal: Segmentation fault (11)
+[easley051:2235447] Signal code:  (-6)
+[easley051:2235447] Failing at address: 0x20bc231100221c37
+[easley051:2235449] [ 1] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19)[0x1548831ffdc9]
+[easley051:2235447] [ 0] /lib64/libc.so.6(+0x3fc60)[0x14b9e9690c60]
+==== backtrace (tid:2235448) ====
+ 0  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(ucs_handle_error+0x2d4) [0x15190e679dc4]
+ 1  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x33f87) [0x15190e679f87]
+ 2  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x34256) [0x15190e67a256]
+ 3  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19) [0x15190f5fbdc9]
+ 4  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e) [0x15190f639cbe]
+ 5  /users/njohnson77/CG/src/./cg() [0x40b8f6]
+ 6  /users/njohnson77/CG/src/./cg() [0x40bcae]
+ 7  /users/njohnson77/CG/src/./cg() [0x40c1be]
+ 8  /lib64/libc.so.6(+0x2a610) [0x15190f09b610]
+ 9  /lib64/libc.so.6(__libc_start_main+0x80) [0x15190f09b6c0]
+10  /users/njohnson77/CG/src/./cg() [0x409c85]
+=================================
+[easley051:2235449] [ 2] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e)[0x15488323dcbe]
+[easley051:2235449] [ 3] /users/njohnson77/CG/src/./cg[0x40b8f6]
+[easley051:2235449] [ 4] /users/njohnson77/CG/src/./cg[0x40bcae]
+[easley051:2235449] [ 5] /users/njohnson77/CG/src/./cg[0x40c1be]
+[easley051:2235447] [ 1] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19)[0x14b9e9bdbdc9]
+[easley051:2235448] *** Process received signal ***
+[easley051:2235448] Signal: Segmentation fault (11)
+[easley051:2235448] Signal code:  (-6)
+[easley051:2235448] Failing at address: 0x20bc231100221c38
+[easley051:2235449] [ 6] /lib64/libc.so.6(+0x2a610)[0x154882c9f610]
+[easley051:2235449] [ 7] /lib64/libc.so.6(__libc_start_main+0x80)[0x154882c9f6c0]
+[easley051:2235449] [ 8] /users/njohnson77/CG/src/./cg[0x409c85]
+[easley051:2235449] *** End of error message ***
+[easley051:2235447] [ 2] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e)[0x14b9e9c19cbe]
+[easley051:2235447] [ 3] /users/njohnson77/CG/src/./cg[0x40b8f6]
+[easley051:2235447] [ 4] /users/njohnson77/CG/src/./cg[0x40bcae]
+[easley051:2235447] [ 5] /users/njohnson77/CG/src/./cg[0x40c1be]
+[easley051:2235448] [ 0] /lib64/libc.so.6(+0x3fc60)[0x15190f0b0c60]
+[easley051:2235448] [ 1] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19)[0x15190f5fbdc9]
+[easley051:2235447] [ 6] /lib64/libc.so.6(+0x2a610)[0x14b9e967b610]
+[easley051:2235447] [ 7] /lib64/libc.so.6(__libc_start_main+0x80)[0x14b9e967b6c0]
+[easley051:2235447] [ 8] /users/njohnson77/CG/src/./cg[0x409c85]
+[easley051:2235447] *** End of error message ***
+[easley051:2235448] [ 2] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e)[0x15190f639cbe]
+[easley051:2235448] [ 3] /users/njohnson77/CG/src/./cg[0x40b8f6]
+[easley051:2235448] [ 4] /users/njohnson77/CG/src/./cg[0x40bcae]
+[easley051:2235448] [ 5] /users/njohnson77/CG/src/./cg[0x40c1be]
+[easley051:2235448] [ 6] /lib64/libc.so.6(+0x2a610)[0x15190f09b610]
+[easley051:2235448] [ 7] /lib64/libc.so.6(__libc_start_main+0x80)[0x15190f09b6c0]
+[easley051:2235448] [ 8] /users/njohnson77/CG/src/./cg[0x409c85]
+[easley051:2235448] *** End of error message ***
+==== backtrace (tid:2235450) ====
+ 0  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(ucs_handle_error+0x2d4) [0x15215df2cdc4]
+ 1  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x33f87) [0x15215df2cf87]
+ 2  /opt/spack/opt/spack/linux-icelake/ucx-1.18.1-gyyqzgpzhjyigrny26pckyozegdoidgt/lib/libucs.so.0(+0x34256) [0x15215df2d256]
+ 3  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19) [0x15215eeaedc9]
+ 4  /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e) [0x15215eeeccbe]
+ 5  /users/njohnson77/CG/src/./cg() [0x40b8f6]
+ 6  /users/njohnson77/CG/src/./cg() [0x40bcae]
+ 7  /users/njohnson77/CG/src/./cg() [0x40c1be]
+ 8  /lib64/libc.so.6(+0x2a610) [0x15215e94e610]
+ 9  /lib64/libc.so.6(__libc_start_main+0x80) [0x15215e94e6c0]
+10  /users/njohnson77/CG/src/./cg() [0x409c85]
+=================================
+[easley051:2235450] *** Process received signal ***
+[easley051:2235450] Signal: Segmentation fault (11)
+[easley051:2235450] Signal code:  (-6)
+[easley051:2235450] Failing at address: 0x20bc231100221c3a
+[easley051:2235450] [ 0] /lib64/libc.so.6(+0x3fc60)[0x15215e963c60]
+[easley051:2235450] [ 1] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(ompi_request_default_test+0x19)[0x15215eeaedc9]
+[easley051:2235450] [ 2] /opt/spack/opt/spack/linux-sapphirerapids/openmpi-4.1.7-3iljxdmzw2og3uklpqbbxgpujm4qtrar/lib/libmpi.so.40(PMPI_Test+0x4e)[0x15215eeeccbe]
+[easley051:2235450] [ 3] /users/njohnson77/CG/src/./cg[0x40b8f6]
+[easley051:2235450] [ 4] /users/njohnson77/CG/src/./cg[0x40bcae]
+[easley051:2235450] [ 5] /users/njohnson77/CG/src/./cg[0x40c1be]
+[easley051:2235450] [ 6] /lib64/libc.so.6(+0x2a610)[0x15215e94e610]
+[easley051:2235450] [ 7] /lib64/libc.so.6(__libc_start_main+0x80)[0x15215e94e6c0]
+[easley051:2235450] [ 8] /users/njohnson77/CG/src/./cg[0x409c85]
+[easley051:2235450] *** End of error message ***
+srun: error: easley051: tasks 0-3: Segmentation fault (core dumped)
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** STEP 1033372.0 ON easley032 CANCELLED AT 2026-07-28T18:18:55 DUE TO TIME LIMIT ***
+slurmstepd: error: *** JOB 1033372 ON easley032 CANCELLED AT 2026-07-28T18:18:55 DUE TO TIME LIMIT ***

@@ -4,7 +4,7 @@
 #SBATCH --error=fileerror.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
-#SBATCH --time=01:00:00
+#SBATCH --time=00:00:30
 #SBATCH --partition=debug
 
 cd /users/njohnson77/CG/src
