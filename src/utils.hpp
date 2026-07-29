@@ -1,4 +1,4 @@
-#include <cude_runtime.h>
+#include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cusparse.h>
 

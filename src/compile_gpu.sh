@@ -5,7 +5,7 @@ export CXX=mpicxx
 
 MPICH_DIR=/opt/cray/pe/mpich/9.0.1/ofi/crayclang/20.0
 
- \
+  nvcc -o cg cg.cpp \
   -I ../../locality_fork/include/ \
   -I${MPICH_DIR}/include \
   -L${MPICH_DIR}/lib -lmpi \
