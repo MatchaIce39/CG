@@ -9,10 +9,10 @@ export CUDA_PATH=/opt/spack/share/spack/lmod/linux-rocky9-x86_64/Core/cuda
 export CC=mpicc
 export CXX=mpicxx
 
-MPICH_DIR=/opt/cray/pe/mpich/9.0.1/ofi/crayclang/20.0
+ MPICH_DIR=/opt/cray/pe/mpich/9.0.1/ofi/crayclang/20.0
 
   nvcc -arch=sm_89 -ccbin=mpicxx -o cg cg.cpp \
-  -I ../../locality_fork/include/ \
+  -I ../../locality_aware/include/ \
   -I${MPI_INC}
   -I${CUDA_INC}
   -I${MPICH_DIR}/include \
@@ -22,4 +22,4 @@ MPICH_DIR=/opt/cray/pe/mpich/9.0.1/ofi/crayclang/20.0
   -DGPU -DGPU_AWARE \
   -lcusparse \
   -lcublas \
-  ../../locality_fork/build_gpu/liblocality_aware.a
+  -x none ../../locality_aware/build_gpu/liblocality_aware.a
