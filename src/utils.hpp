@@ -14,7 +14,7 @@
   }
 #define CUSPARSE_CHECK(cmd)                                         \
   {                                                                  \
-    cudaError_t error = cmd;                                    \
+    cusparseStatus_t error = cmd;                                    \
     if (error != CUSPARSE_STATUS_SUCCESS) {                         \
       fprintf(stderr, "error: '%d' at %s:%d\n",                      \
             (int)error, __FILE__, __LINE__);                         \

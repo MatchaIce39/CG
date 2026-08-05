@@ -224,7 +224,7 @@ void copy_to_device(const Mat& h, GPUMat& d)
     CUDA_CHECK(cudaMemcpy(d.data, h.data.data(), d.nnz*sizeof(double),
             cudaMemcpyHostToDevice));
 
-    cudaDataType_t cusparseCreateCsr(d.descr,
+    cusparseStatus_t cusparseCreateCsr(d.descr,
             d.n_rows, d.n_cols, d.nnz,
             d.rowptr, d.col_idx, d.data,
             CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
@@ -250,7 +250,7 @@ void copy_to_device(ParMat& A)
 
 void free_gpu_mat(GPUMat& d)
 {
-    CUDA_CHECK(cusparseDestroySpMat(d.descr));
+    CUSPARSE_CHECK(cusparseDestroySpMat(*d.descr));
     CUDA_CHECK(cudaFree(d.rowptr));
     CUDA_CHECK(cudaFree(d.col_idx));
     CUDA_CHECK(cudaFree(d.data));
