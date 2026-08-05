@@ -224,7 +224,7 @@ void copy_to_device(const Mat& h, GPUMat& d)
     CUDA_CHECK(cudaMemcpy(d.data, h.data.data(), d.nnz*sizeof(double),
             cudaMemcpyHostToDevice));
 
-    cusparseStatus_t cusparseCreateCsr(d.descr,
+    cudaDataType_t cusparseCreateCsr(d.descr,
             d.n_rows, d.n_cols, d.nnz,
             d.rowptr, d.col_idx, d.data,
             CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
@@ -250,10 +250,10 @@ void copy_to_device(ParMat& A)
 
 void free_gpu_mat(GPUMat& d)
 {
-    rocsparse_destroy_spmat_descr(d.descr);
-    HIP_CHECK(hipFree(d.rowptr));
-    HIP_CHECK(hipFree(d.col_idx));
-    HIP_CHECK(hipFree(d.data));
+    CUDA_CHECK(cusparseDestroySpMat(d.descr));
+    CUDA_CHECK(cudaFree(d.rowptr));
+    CUDA_CHECK(cudaFree(d.col_idx));
+    CUDA_CHECK(cudaFree(d.data));
 }
 
 void free_mat(ParMat& A)
@@ -263,11 +263,11 @@ void free_mat(ParMat& A)
 
     if (A.send_comm.size_msgs)
     {
-        HIP_CHECK(hipFree(A.send_comm.d_idx));
+        CUDA_CHECK(cudaFree(A.send_comm.d_idx));
     }
 
-    rocsparse_destroy_handle(A.sparse_handle);
-    rocblas_destroy_handle(A.blas_handle);
+    cusparseDestroy(A.sparse_handle);
+    cublasDestroy(A.blas_handle);
 }
 
 #endif
