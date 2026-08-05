@@ -396,9 +396,9 @@ int main(int argc, char* argv[])
     double zero = 0.0;
     CUSPARSE_CHECK(cusparseSpMV(A.sparse_handle, 
             CUSPARSE_OPERATION_NON_TRANSPOSE,
-            &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
+            &one, *A.d_on_proc.descr, vec_x, &zero, vec_b,
             CUDA_R_64F,
-            cusparseSpMVAlg_t, NULL));
+            CUSPARSE_SPMV_ALG_DEFAULT, NULL));
     if (A.d_on_proc.buf_size)
     {
         CUDA_CHECK(cudaMalloc(&A.d_on_proc.buffer,
@@ -406,9 +406,9 @@ int main(int argc, char* argv[])
     }
     CUSPARSE_CHECK(cusparseSpMV(A.sparse_handle, 
             CUSPARSE_OPERATION_NON_TRANSPOSE,
-            &one, A.d_off_proc.descr, vec_recv, &zero, vec_b,
+            &one, *A.d_off_proc.descr, vec_recv, &zero, vec_b,
             CUDA_R_64F,
-            cusparseSpMVAlg_t, NULL)); 
+            CUSPARSE_SPMV_ALG_DEFAULT, NULL)); 
     if (A.d_off_proc.buf_size)
     {
         CUDA_CHECK(cudaMalloc(&A.d_off_proc.buffer,
