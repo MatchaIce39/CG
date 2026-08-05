@@ -20,7 +20,7 @@ __global__ void pack(const double* __restrict__ x,
 void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
             double alpha, cusparseDnVecDescr_t x, 
             double beta, cusparseDnVecDescr_t y,
-            size_t tmp_buffer_size, void* tmp_buffer)
+            void* tmp_buffer)
 {
     CUSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
             &alpha, A, x, &beta, y, 
@@ -69,11 +69,11 @@ void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
             mpil_topo,
             mpil_comm);
 
-    spmv(A.sparse_handle, A.d_on_proc.descr, alpha, vec_x, 
-            beta, vec_b, A.d_on_proc.buf_size, A.d_on_proc.buffer); 
+    spmv(A.sparse_handle, *A.d_on_proc.descr, alpha, vec_x, 
+            beta, vec_b, A.d_on_proc.buffer); 
 
-    spmv(A.sparse_handle, A.d_off_proc.descr, alpha, vec_recv,
-            1.0, vec_b, A.d_off_proc.buf_size, A.d_off_proc.buffer);
+    spmv(A.sparse_handle, *A.d_off_proc.descr, alpha, vec_recv,
+            1.0, vec_b, A.d_off_proc.buffer);
     CUDA_CHECK(cudaStreamSynchronize(0));
 
     MPIL_Info_free(&mpil_info);
@@ -102,13 +102,13 @@ void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x,
 
         MPIL_Start(req);
 
-        spmv(A.sparse_handle, A.d_on_proc.descr, alpha, vec_x, 
-                beta, vec_b, A.d_on_proc.buf_size, A.d_on_proc.buffer);
+        spmv(A.sparse_handle, *A.d_on_proc.descr, alpha, vec_x, 
+                beta, vec_b, A.d_on_proc.buffer);
 
         MPIL_Wait(req, MPI_STATUS_IGNORE);
 
-        spmv(A.sparse_handle, A.d_off_proc.descr, alpha, vec_recv,
-                1.0, vec_b, A.d_off_proc.buf_size, A.d_off_proc.buffer);
+        spmv(A.sparse_handle, *A.d_off_proc.descr, alpha, vec_recv,
+                1.0, vec_b, A.d_off_proc.buffer);
         CUDA_CHECK(cudaStreamSynchronize(0));
     }
     else
@@ -394,25 +394,21 @@ int main(int argc, char* argv[])
     // Initialize SpMV Buffers
     double one = 1.0;
     double zero = 0.0;
-    CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
+    CUSPARSE_CHECK(cusparseSpMV(A.sparse_handle, 
             CUSPARSE_OPERATION_NON_TRANSPOSE,
             &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
             CUDA_R_64F,
-            cusparseSpMVAlg_t,
-            //cusparseSpMV_bufferSize,
-            &A.d_on_proc.buf_size, NULL));
+            cusparseSpMVAlg_t, NULL));
     if (A.d_on_proc.buf_size)
     {
         CUDA_CHECK(cudaMalloc(&A.d_on_proc.buffer,
             A.d_on_proc.buf_size));
     }
-    CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
+    CUSPARSE_CHECK(cusparseSpMV(A.sparse_handle, 
             CUSPARSE_OPERATION_NON_TRANSPOSE,
             &one, A.d_off_proc.descr, vec_recv, &zero, vec_b,
             CUDA_R_64F,
-            cusparseSpMVAlg_t,
-            //cusparsespmv_bufferSize,
-            &A.d_off_proc.buf_size, NULL)); 
+            cusparseSpMVAlg_t, NULL)); 
     if (A.d_off_proc.buf_size)
     {
         CUDA_CHECK(cudaMalloc(&A.d_off_proc.buffer,
