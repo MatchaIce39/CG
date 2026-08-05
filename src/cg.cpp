@@ -580,9 +580,9 @@ if (rank == 0) printf("norm b %e\n", norm_b);
         }
     }
 
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_x));
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_b));
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_r));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_x));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_b));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_r));
     CUSPARSE_CHECK(cusparseDestroyDnVec(vec_recv));
 
     CUDA_CHECK(cudaFree(x_d));

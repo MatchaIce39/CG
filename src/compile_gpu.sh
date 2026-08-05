@@ -16,4 +16,5 @@ export CXX=mpicxx
   -lmpi_gtl_hsa \
   -DGPU -DGPU_AWARE \
   -lcusparse \
-  -lcublas 
+  -lcublas \
+  -L ../../locality_aware/build_gpu/liblocality_aware.a
