@@ -25,8 +25,7 @@ void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
     CUSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
             &alpha, A, x, &beta, y, 
             CUDA_R_64F,
-            cusparseSpMVAlg_t,
-            &tmp_buffer_size, tmp_buffer));
+            CUSPARSE_SPMV_ALG_DEFAULT, tmp_buffer));
 }
 
 void spmv(double alpha, ParMat& A, double* x_d, cusparseDnVecDescr_t vec_x, 
@@ -309,9 +308,9 @@ int CG(ParMat& A, double* x, cusparseDnVecDescr_t vec_x,
     MPIL_Info_free(&mpil_info);
     MPIL_Comm_free(&mpil_comm);
 
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_r));
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_p));
-    CUSPARSE_CHECK(cusparseDestoryDnVec(vec_Ap));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_r));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_p));
+    CUSPARSE_CHECK(cusparseDestroyDnVec(vec_Ap));
 
     CUDA_CHECK(cudaFree(r));
     CUDA_CHECK(cudaFree(p));
@@ -381,7 +380,7 @@ int main(int argc, char* argv[])
                 A.recv_comm.size_msgs*sizeof(double)));
     }
 
-    rocsparse_dnvec_descr vec_x, vec_b, vec_r, vec_recv;
+    cusparseDnVecDescr_t vec_x, vec_b, vec_r, vec_recv;
     CUSPARSE_CHECK(cusparseCreateDnVec(&vec_x, A.local_cols, x_d, 
             CUDA_R_64F));
     CUSPARSE_CHECK(cusparseCreateDnVec(&vec_b, A.local_rows, b_d,
@@ -396,7 +395,7 @@ int main(int argc, char* argv[])
     double one = 1.0;
     double zero = 0.0;
     CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
-            cusparse_operation_non_transpose,
+            CUSPARSE_OPERATION_NON_TRANSPOSE,
             &one, A.d_on_proc.descr, vec_x, &zero, vec_b,
             CUDA_R_64F,
             cusparseSpMVAlg_t,
@@ -408,7 +407,7 @@ int main(int argc, char* argv[])
             A.d_on_proc.buf_size));
     }
     CUSPARSE_CHECK(cusparse_spmv(A.sparse_handle, 
-            cusparse_operation_non_transpose,
+            CUSPARSE_OPERATION_NON_TRANSPOSE,
             &one, A.d_off_proc.descr, vec_recv, &zero, vec_b,
             CUDA_R_64F,
             cusparseSpMVAlg_t,

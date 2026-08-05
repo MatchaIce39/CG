@@ -224,7 +224,7 @@ void copy_to_device(const Mat& h, GPUMat& d)
     CUDA_CHECK(cudaMemcpy(d.data, h.data.data(), d.nnz*sizeof(double),
             cudaMemcpyHostToDevice));
 
-    cusparseStatus_t cusparseCreateCsr(d.descr,
+    cusparseStatus_t status = cusparseCreateCsr(d.descr,
             d.n_rows, d.n_cols, d.nnz,
             d.rowptr, d.col_idx, d.data,
             CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,

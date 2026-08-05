@@ -8,7 +8,7 @@ export CUDA_PATH=/opt/spack/share/spack/lmod/linux-rocky9-x86_64/Core/cuda
 export CC=mpicc
 export CXX=mpicxx
 
-  nvcc -arch=sm_89 -ccbin=mpicxx -o cg cg.cpp \
+  nvcc -arch=sm_89 -ccbin=mpicxx -x cu -o cg cg.cpp \
   -I ../../locality_aware/include/ \
   -I${MPI_INC} \
   -I${CUDA_INC} \
