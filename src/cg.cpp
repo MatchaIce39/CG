@@ -91,6 +91,7 @@ double inner_product(std::vector<double> a, std::vector<double> b, MPI_Request *
     sum_local = 0;
     for (int i = 0; i < a.size(); i++)
         sum_local += a[i] * b[i];
+
     //The Iallreduce will return an MPI_Request object which must be passed into the spmv 
     MPI_Iallreduce(&sum_local, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &localRequest);
 
