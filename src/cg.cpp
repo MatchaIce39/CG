@@ -5,32 +5,27 @@
 
 // Serial SpMV b = alpha*A*x + beta*b
 void spmv(double alpha, Mat& A, std::vector<double>& x,
-        double beta, std::vector<double>& b, MPI_Request *localRequest)
+        double beta, std::vector<double>& b)
 {
     double sum;
-    int flag = 0;
     int start, end;
 
     for (int i = 0; i < A.n_rows; i++)
     {
         start = A.rowptr[i];
-	//MPI_Test(localRequest, &flag, MPI_STATUS_IGNORE);
         end = A.rowptr[i+1];
         sum = 0;
         for (int j = start; j < end; j++)
         {
             sum += A.data[j] * x[A.col_idx[j]];
-	    MPI_Test(localRequest, &flag, MPI_STATUS_IGNORE);
         }
         b[i] = alpha * sum + beta * b[i];
     }
-
-    MPI_Wait(localRequest, MPI_STATUS_IGNORE);
 }
 
 // Parallel SpMV b = alpha*A*x + beta*b
 void spmv(double alpha, ParMat& A, std::vector<double>& x, 
-        double beta, std::vector<double>& b, MPI_Request *localRequest)
+        double beta, std::vector<double>& b)
 {
     int proc, start, end;
     int tag = 0;
@@ -67,7 +62,7 @@ void spmv(double alpha, ParMat& A, std::vector<double>& x,
                   &(A.send_comm.req[i]));
     }
 
-    spmv(alpha, A.on_proc, x, beta, b, localRequest);
+    spmv(alpha, A.on_proc, x, beta, b);
 
     if (A.recv_comm.n_msgs)
     {
@@ -79,23 +74,19 @@ void spmv(double alpha, ParMat& A, std::vector<double>& x,
         MPI_Waitall(A.send_comm.n_msgs, A.send_comm.req.data(), MPI_STATUSES_IGNORE);
     }
 
-    spmv(alpha, A.off_proc, recvbuf, 1.0, b, localRequest);
+    spmv(alpha, A.off_proc, recvbuf, 1.0, b);
 
 }
 
-double inner_product(std::vector<double> a, std::vector<double> b, MPI_Request *request)
+double inner_product(std::vector<double> a, std::vector<double> b)
 {
     double sum, sum_local;
-    MPI_Request localRequest;
 
     sum_local = 0;
     for (int i = 0; i < a.size(); i++)
         sum_local += a[i] * b[i];
 
-    //The Iallreduce will return an MPI_Request object which must be passed into the spmv 
-    MPI_Iallreduce(&sum_local, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &localRequest);
-
-    *request = localRequest;
+    MPI_Allreduce(&sum_local, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return sum;
 }
@@ -118,8 +109,6 @@ int main(int argc, char* argv[])
     int rank, num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-    //MPI Request for non-blocking
-    MPI_Request request;
 
     const char* filename = "Dubcova2.pm";
     if (argc > 1)
@@ -138,7 +127,7 @@ int main(int argc, char* argv[])
     srand(time(NULL) + rank);
     std::generate(x.begin(), x.end(), 
             [&](){ return (double)(rand()) / RAND_MAX; });
-    spmv(1.0, A, x, 0.0, b, &request);
+    spmv(1.0, A, x, 0.0, b);
     std::fill(x.begin(), x.end(), 0);
 
     // CG Variables
@@ -154,14 +143,13 @@ int main(int argc, char* argv[])
 
     // r0 = b - A * x0
     r = b;
-    //rr_inner = inner_product(r, r);
-    spmv(-1.0, A, x, 1.0, r, &request);
+    spmv(-1.0, A, x, 1.0, r);
 
     // p0 = r0
     p = r;
 
     // Find initial (r, r) and residual
-    rr_inner = inner_product(r, r, &request);
+    rr_inner = inner_product(r, r);
     norm_r = sqrt(rr_inner);
     res.push_back(norm_r);
 
@@ -179,10 +167,8 @@ int main(int argc, char* argv[])
     while (norm_r > tol && iter < max_iter)
     {
         // alpha_i = (r_i, r_i) / (A*p_i, p_i)
-	App_inner = inner_product(Ap, p, &request);
-
-        spmv(1.0, A, p, 0.0, Ap, &request);
-        //App_inner = inner_product(Ap, p);
+	spmv(1.0, A, p, 0.0, Ap);
+	App_inner = inner_product(Ap, p);
         if (App_inner < 0.0)
         {
             printf("Indefinite matrix detected in CG! Aborting...\n");
@@ -200,10 +186,10 @@ int main(int argc, char* argv[])
         else
         {
             r = b;
-            spmv(-1.0, A, x, 1.0, r, &request);
+            spmv(-1.0, A, x, 1.0, r);
         }
 
-        next_inner = inner_product(r, r, &request);
+        next_inner = inner_product(r, r);
         beta = next_inner / rr_inner;
 
         scale(beta, p);
