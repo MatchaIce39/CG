@@ -477,15 +477,15 @@ if (rank == 0) printf("norm b %e\n", norm_b);
 */
 
     std::vector<AllreduceMethod> methods = {
-            ALLREDUCE_PMPI, 
-            ALLREDUCE_CTC_RECURSIVE_DOUBLING, 
-            ALLREDUCE_CTC_DISSEMINATION_LOC, 
-            ALLREDUCE_CTC_DISSEMINATION_ML, 
-            ALLREDUCE_CTC_DISSEMINATION_RADIX,
-            ALLREDUCE_CTC_RECURSIVE_DOUBLING, 
-            ALLREDUCE_CTC_DISSEMINATION_LOC, 
-            ALLREDUCE_CTC_DISSEMINATION_ML, 
-            ALLREDUCE_CTC_DISSEMINATION_RADIX, 
+            ALLREDUCE_PMPI 
+            //ALLREDUCE_CTC_RECURSIVE_DOUBLING, 
+            //ALLREDUCE_CTC_DISSEMINATION_LOC, 
+            //ALLREDUCE_CTC_DISSEMINATION_ML, 
+            //ALLREDUCE_CTC_DISSEMINATION_RADIX,
+            //ALLREDUCE_CTC_RECURSIVE_DOUBLING, 
+            //ALLREDUCE_CTC_DISSEMINATION_LOC, 
+            //ALLREDUCE_CTC_DISSEMINATION_ML, 
+            //ALLREDUCE_CTC_DISSEMINATION_RADIX, 
             };
     std::vector<const char*> names = {
             "PMPI", 
