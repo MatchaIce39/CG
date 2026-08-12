@@ -427,6 +427,8 @@ int main(int argc, char* argv[])
     spmv(1.0, A, x_d, vec_x, 0.0, b_d, vec_b, mpil_comm,
             sendbuf, recvbuf, vec_recv);
 
+    //on line 430, this is a test
+
     int n_iters;
     int conv_iter;
     std::vector<double> r;
