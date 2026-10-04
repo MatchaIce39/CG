@@ -3,6 +3,7 @@
 #include "locality_aware.h"
 #include <math.h>
 #include <random>
+#include <cuda_runtime.h>
 
 #include "utils.hpp"
 
