@@ -1,11 +1,13 @@
 module load cuda/12.9.0-rir3
-module load openmpi/4.1.7-cuda-6zaq
+module load openmpi/5.0.10-ijuq
 
 export CC=mpicc
 export CXX=mpicxx
 
-nvcc -arch=sm_89 -ccbin=mpicxx -x cu -o cg cg.cpp \
+nvcc -arch=sm_89 -ccbin=mpicxx -x cu cg.cpp -o cg -lcusparse -lcublas\
 	-I${MPI_ROOT}/include \
 	-I${CUDA_ROOT}/include \
-	-I${HOME}/locality_aware/include \
-	-L${HOME}/locality_aware/build_gpu/liblocality_aware.a 
+	-lmpi_gtl_hsa \
+	-DGPU -DGPU_AWARE -DUSE_CUDA \
+	-I${HOME}/locality_aware/include/ \
+	-I${HOME}locality_aware/build/liblocality_aware.a

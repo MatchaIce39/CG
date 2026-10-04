@@ -4,6 +4,7 @@
 #include <math.h>
 #include <random>
 #include <cuda_runtime.h>
+#include <cusparse.h>
 
 #include "utils.hpp"
 
@@ -440,6 +441,7 @@ int main(int argc, char* argv[])
     norm_b = sqrt(norm_b);
 if (rank == 0) printf("norm b %e\n", norm_b);
 
+
     std::vector<NeighborAlltoallvMethod> neighbor_methods = {
             NEIGHBOR_ALLTOALLV_GPU_STANDARD, 
             NEIGHBOR_ALLTOALLV_GPU_LOCALITY
@@ -455,7 +457,6 @@ if (rank == 0) printf("norm b %e\n", norm_b);
             "Pers Locality"
             };
     std::vector<bool> neighbor_persistent = {false, false, true, true};
-
 
 /*
    std::vector<NeighborAlltoallvMethod> neighbor_methods = {
@@ -474,8 +475,8 @@ if (rank == 0) printf("norm b %e\n", norm_b);
             "MPIL RMA Hier Pers", 
             "MPIL RMA Hier EB Pers"};
     std::vector<bool> persistent = {false, true, true};
-
 */
+
 
     std::vector<AllreduceMethod> methods = {
             ALLREDUCE_PMPI 
