@@ -2,6 +2,9 @@
 #include "par_binary_IO.hpp"
 
 #include <math.h>
+#include <cuda_runtime.h>
+#include <cusparse.h>
+#include <cublas_v2.h>
 
 // Serial SpMV b = alpha*A*x + beta*b
 void spmv(double alpha, Mat& A, std::vector<double>& x,
@@ -105,10 +108,10 @@ void scale(double alpha, std::vector<double>& x)
 
 int main(int argc, char* argv[])
 {
-    oMPI_Init(&argc, &argv);
-    oint rank, num_procs;
-    oMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    oMPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    MPI_Init(&argc, &argv);
+    int rank, num_procs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
     const char* filename = "Dubcova2.pm";
     if (argc > 1)
