@@ -1,8 +1,10 @@
 #include "sparse_mat.hpp"
 #include "par_binary_IO.hpp"
 #include "locality_aware.h"
+
 #include <math.h>
 #include <random>
+
 #include <cuda_runtime.h>
 #include <cusparse.h>
 
@@ -25,7 +27,7 @@ void spmv(cusparseHandle_t handle, cusparseSpMatDescr_t A,
             void* tmp_buffer)
 {
     CUSPARSE_CHECK(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
-            &alpha, A, x, &beta, y, 
+            &alpha, A, x, &beta, y,
             CUDA_R_64F,
             CUSPARSE_SPMV_ALG_DEFAULT, tmp_buffer));
 }
