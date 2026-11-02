@@ -108,6 +108,30 @@ void scale(double alpha, std::vector<double>& x)
 
 int main(int argc, char* argv[])
 {
+
+    //variables for the matrix
+    const int A_num_rows      = 4;
+    const int A_num_cols      = 4;
+    const int A_nnz           = 9;
+    int       hA_csrOffsets[] = { 0, 3, 4, 7, 9 };
+    int       hA_columns[]    = { 0, 2, 3, 1, 0, 2, 3, 1, 3 };
+    float     hA_values[]     = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f,
+                                  6.0f, 7.0f, 8.0f, 9.0f };
+
+    float     hX[]            = { 1.0f, 2.0f, 3.0f, 4.0f };
+    float     hY[]            = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float     hY_result[]     = { 19.0f, 8.0f, 51.0f, 52.0f };
+
+    //Variables
+    float alphaNonCG = 1.0f;
+    //I would like to know why these need to be pointed to
+    float betaNonCG = 0.0f;
+
+    //Cusparse APIs
+    cusparseHandle_t handle = NULL;
+    cusparseSpMatDescr_t A2;
+    void* dBuffer = NULL;
+
     MPI_Init(&argc, &argv);
     int rank, num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -119,24 +143,70 @@ int main(int argc, char* argv[])
         filename = argv[1];
     }
 
+    //old matrix defintion
     ParMat A;
     readParMatrix(filename, A);
     form_comm(A);
+
+    int64_t local_rows = A.local_rows;
+    int64_t local_cols = A.local_cols;
+
+    /*
     std::vector<double> x(A.local_cols);
     std::vector<double> b(A.local_rows);
+    */
     std::vector<double> res;
+
+    std::vector<double> x(local_cols);
+    std::vector<double> b(local_rows);
+
+   // 2. Use it for your vectors
+    std::vector<double> r(local_rows);
+    std::vector<double> p(local_rows);
+    std::vector<double> Ap(local_rows);
+
+    int   *dA_csrOffsets, *dA_columns;
+    float *dA_values, *dX, *dY;
+    cudaMalloc((void**) &dA_csrOffsets,(A_num_rows + 1) * sizeof(int));
+    cudaMalloc((void**) &dA_columns, A_nnz * sizeof(int));
+    cudaMalloc((void**) &dA_values,  A_nnz * sizeof(float));
+    cudaMalloc((void**) &dX,         A_num_cols * sizeof(float));
+    cudaMalloc((void**) &dY,         A_num_rows * sizeof(float));
+
+    cudaMemcpy(dA_csrOffsets, hA_csrOffsets,
+                           (A_num_rows + 1) * sizeof(int),
+                           cudaMemcpyHostToDevice);
+    cudaMemcpy(dA_columns, hA_columns, A_nnz * sizeof(int),
+                           cudaMemcpyHostToDevice);
+    cudaMemcpy(dA_values, hA_values, A_nnz * sizeof(float),
+                           cudaMemcpyHostToDevice);
+    cudaMemcpy(dX, hX, A_num_cols * sizeof(float),
+                           cudaMemcpyHostToDevice);
+    cudaMemcpy(dY, hY, A_num_rows * sizeof(float),
+                           cudaMemcpyHostToDevice);
+
+    //Creating new handle and new matrix with createCsr since spmv only takes this type
+    cusparseCreate(&handle);
+    cusparseCreateCsr(&A2, A_num_rows, A_num_cols, A_nnz,
+                                      dA_csrOffsets, dA_columns, dA_values,
+                                      CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
+                                      CUSPARSE_INDEX_BASE_ZERO, CUDA_R_32F);
 
     // Set b to random values, x to 0
     srand(time(NULL) + rank);
     std::generate(x.begin(), x.end(), 
             [&](){ return (double)(rand()) / RAND_MAX; });
-    spmv(1.0, A, x, 0.0, b);
+
+    cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE, &alphaNonCG, A2, x, &betaNonCG, b, CUDA_R_32F, CUSPARSE_SPMV_ALG_DEFAULT, dBuffer);
+
     std::fill(x.begin(), x.end(), 0);
 
+    /*
     // CG Variables
     std::vector<double> r(A.local_rows);
     std::vector<double> p(A.local_rows);
     std::vector<double> Ap(A.local_rows);
+    */
 
     int iter, recompute_r;
     double alpha, beta;
